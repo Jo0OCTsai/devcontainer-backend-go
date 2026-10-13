@@ -1,0 +1,25 @@
+# golangci-lint v2 —— go 栈统一门禁（lint_check 单源执行；对齐 backend 的双面守卫）：
+#   govet + gofmt   = 基础 lint（吸收栈指南原 vet/gofmt 口径；gofmt 属 formatters 段）
+#   depguard        = 架构边界（对齐 backend import-linter 契约：internal 禁反向依赖 cmd；
+#                     internal 各包独立——当前单包，包拆分时扩 deny 规则）
+#   gocyclo         = 复杂度门禁（圈复杂度 ≥15 即红，语义对齐 ruff C901 / 质量棘轮口径；
+#                     注：maintidx 在 golangci-lint v2.14 实证 threshold 不生效，故弃用）
+version: "2"
+formatters:
+  enable:
+    - gofmt
+linters:
+  default: none
+  enable:
+    - govet
+    - depguard
+    - gocyclo
+  settings:
+    gocyclo:
+      min-complexity: 15
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: "github.com/Jo0OCTsai/devcontainer-backend-go/cmd"
+              desc: "业务层禁反向依赖入口层（对齐 backend 的 import-linter forbidden 契约）"

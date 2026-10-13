@@ -10,8 +10,8 @@ todo app 后端的 Go 镜像（骨架阶段）：health 端点 + 静态 OpenAPI 
 ## 技术栈
 
 - Go（标准库 `net/http`，**零三方依赖**——适配项目的刻意选择，降低首例接入变量）
-- lint：`go vet` + `gofmt`（golangci-lint depguard 边界机检随首例验证定版）
-- 测试：标准库表驱动测试（`go test ./... -cover`）
+- lint：**golangci-lint v2**（`.golangci.yml`：govet + gofmt + **depguard 边界** + **gocyclo 复杂度 ≥15**；注：maintidx 在 v2.14 实证 threshold 不生效，故弃用）
+- 测试：标准库表驱动测试（`go test ./... -cover`；覆盖率棘轮地板 61，测量口径 = coverprofile 合并总%）
 
 ## 环境与命令
 
@@ -25,9 +25,8 @@ go test ./... -cover
 # 启动开发服务器（默认 :8001；ADDR 可覆盖）
 go run ./cmd/server
 
-# lint
-go vet ./...
-test -z "$(gofmt -l .)"
+# lint（golangci-lint：govet+gofmt+depguard+gocyclo 一体）
+golangci-lint run
 ```
 
 ## 目录结构
@@ -42,6 +41,6 @@ backend-go/
 ## 约定（镜像 backend 的分层边界）
 
 - **依赖方向**：`cmd/server → internal/app` 单向；`internal/*` 禁止反向依赖 `cmd/*`，
-  `internal` 内各包相互独立（对齐 backend 的 import-linter 双契约；depguard 机检随首例定版）。
+  `internal` 内各包相互独立——**depguard 机检已落地**（`.golangci.yml`；反向依赖另被 Go import cycle 语言级拦截）。
 - API 形状（路径、JSON 字段、尾斜杠行为）与 `backend/` 保持一致，漂移即 bug。
 - `internal/app/openapi.json` 为静态嵌入（`go:embed`）——go:embed 只能引用包内文件，故不入 `api/` 目录。
